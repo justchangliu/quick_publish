@@ -1,86 +1,18 @@
 function createSlidesFromFolder() {
-  // Use your folder ID for the content files
+  // Use your folder ID
   var folderId = "1LCPGI7uXjwNgGYPKu3dHP1kw2GREDaAZ";
   var folder = DriveApp.getFolderById(folderId);
   
-  // Folder ID for the logo
-  var logoFolderId = "1PHwtbdsywj7L24MJbvYkjNpy7MsZqXTE";  // Your company logo folder ID
-  var logoFolder = DriveApp.getFolderById(logoFolderId);
+  // Get all files in the folder
+  var files = folder.getFiles();
   
-  // Retrieve all logo files from the logo folder
-  var logoFiles = logoFolder.getFiles();
-  
-  // Store logo file names in an array for display
-  var logoFileNames = [];
-  
-  // Loop through files and log their names
-  while (logoFiles.hasNext()) {
-    var file = logoFiles.next();
-    Logger.log(file.getName());  // Log the available logo file names
-    logoFileNames.push(file.getName());
-  }
-  
-  // MANUAL SELECTION: Specify the logo file name to use
-  var selectedLogoFileName = "columbia-university-logo-png-transparent.png"; // Replace with the actual file name of your logo
-  
-  // Retrieve the selected logo file from the folder
-  var selectedLogoFile = null;
-  var logoFiles = logoFolder.getFiles();
-  
-  while (logoFiles.hasNext()) {
-    var file = logoFiles.next();
-    if (file.getName() === selectedLogoFileName) {
-      selectedLogoFile = file;
-      break;
-    }
-  }
-  
-  if (selectedLogoFile === null) {
-    Logger.log("The selected logo file was not found.");
-    return;
-  }
-  
-  // Get the current date and format it as YYYY_MM_DD
-  var today = new Date();
-  var year = today.getFullYear();
-  var month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based, so +1
-  var day = String(today.getDate()).padStart(2, '0');
-  var formattedDate = year + "_" + month + "_" + day;
-  
-  // Set the title of the slide deck with the formatted date
-  var slideDeckTitle = "Generated Slide Deck - " + formattedDate;
-  
-  // Create a new Google Slides presentation with the title and date
-  var slideDeck = SlidesApp.create(slideDeckTitle);
-  
-  // Add a title slide with title and subtitle
-  var titleSlide = slideDeck.appendSlide(SlidesApp.PredefinedLayout.TITLE);
-  
-  // Set custom text in the title and subtitle placeholders
-  var titleText = "Update Template"; // Replace with your desired title
-  var subtitleText = "Chang Liu"; // Replace with your desired subtitle
-  
-  // Access title and subtitle placeholders if they exist
-  var titleShape = titleSlide.getPlaceholder(SlidesApp.PlaceholderType.TITLE);
-  var subtitleShape = titleSlide.getPlaceholder(SlidesApp.PlaceholderType.SUBTITLE);
-  
-  if (titleShape != null) {
-    titleShape.asShape().getText().setText(titleText);
-  }
-  
-  if (subtitleShape != null) {
-    subtitleShape.asShape().getText().setText(subtitleText);
-  }
+  // Create a new Google Slides presentation
+  var slideDeck = SlidesApp.create("Generated Slide Deck");
   
   // Initialize variables for images and notes
   var notesText = "";
   
-  // Define space for the text boxes (above and below the image)
-  var textBoxHeight = 30;
-  var padding = 10; // Space between the image and text boxes
-  
   // Loop through the files in the folder
-  var files = folder.getFiles();
   while (files.hasNext()) {
     var file = files.next();
     var fileName = file.getName();
@@ -89,58 +21,27 @@ function createSlidesFromFolder() {
     if (mimeType === MimeType.PNG) {
       // Add a slide and insert image if the file is a PNG
       var slide = slideDeck.appendSlide(SlidesApp.PredefinedLayout.BLANK);
+      var image = slide.insertImage(file.getBlob());
       
-      // Get the slide dimensions
+      // Resize the image to fit the slide
       var slideWidth = slideDeck.getPageWidth();
       var slideHeight = slideDeck.getPageHeight();
-      
-      // Calculate available height for the image, considering text boxes above and below
-      var availableHeightForImage = slideHeight - (2 * textBoxHeight) - (2 * padding);
-      
-      // Insert the image
-      var image = slide.insertImage(file.getBlob());
       var imageWidth = image.getWidth();
       var imageHeight = image.getHeight();
       
-      // Scale image to fit within the available space
+      // Scale image to fit within slide dimensions
       var widthRatio = slideWidth / imageWidth;
-      var heightRatio = availableHeightForImage / imageHeight;
+      var heightRatio = slideHeight / imageHeight;
       var scalingFactor = Math.min(widthRatio, heightRatio);
       
       image.setWidth(imageWidth * scalingFactor);
       image.setHeight(imageHeight * scalingFactor);
       
-      // Center the image on the slide, accounting for the text boxes
+      // Center the image on the slide
       var left = (slideWidth - image.getWidth()) / 2;
-      var top = (slideHeight - (image.getHeight() + 2 * textBoxHeight + 2 * padding)) / 2 + textBoxHeight + padding;
+      var top = (slideHeight - image.getHeight()) / 2;
       image.setLeft(left);
       image.setTop(top);
-      
-      // Add a text box above the figure with the file name
-      var textBoxTop = slide.insertTextBox(fileName, left, top - textBoxHeight - padding, image.getWidth(), textBoxHeight);
-      textBoxTop.getText().getTextStyle().setFontSize(18);
-      textBoxTop.getText().getTextStyle().setBold(true);
-      
-      // Add a text box below the figure with "Notes"
-      var textBoxBottom = slide.insertTextBox("Notes", left, top + image.getHeight() + padding, image.getWidth(), textBoxHeight);
-      textBoxBottom.getText().getTextStyle().setFontSize(18);
-      
-      // Insert the logo in the top-right corner of the slide
-      var logoBlob = selectedLogoFile.getBlob();
-      var logoImage = slide.insertImage(logoBlob);
-      var logoWidth = logoImage.getWidth();
-      var logoHeight = logoImage.getHeight();
-      
-      // Scale the logo if necessary (e.g., to 50x50 pixels)
-      var logoMaxWidth = 50;
-      var logoMaxHeight = 50;
-      var logoScalingFactor = Math.min(logoMaxWidth / logoWidth, logoMaxHeight / logoHeight);
-      logoImage.setWidth(logoWidth * logoScalingFactor);
-      logoImage.setHeight(logoHeight * logoScalingFactor);
-      
-      // Position the logo in the top-right corner
-      logoImage.setLeft(slideWidth - logoImage.getWidth() - 10); // 10 pixels from the right edge
-      logoImage.setTop(5); // 10 pixels from the top edge
       
     } else if (fileName === "notes.txt") {
       // Read the text from the notes.txt file
@@ -154,18 +55,19 @@ function createSlidesFromFolder() {
     var slides = slideDeck.getSlides();
     for (var i = 0; i < slides.length; i++) {
       var notesPage = slides[i].getNotesPage();
-      
-      // Access the speaker notes shape and set text
       var speakerNotesShape = notesPage.getSpeakerNotesShape();
       
-      // Check if the speaker notes shape exists
+      // Check if speaker notes shape exists
       if (speakerNotesShape) {
-        speakerNotesShape.getText().setText(notesText);
+        speakerNotesShape.setText(notesText);
+      } else {
+        // Create speaker notes if they don't exist
+        var shape = notesPage.insertShape(SlidesApp.ShapeType.TEXT_BOX, 0, 0, slides[i].getPageWidth(), slides[i].getPageHeight());
+        shape.setText(notesText);
       }
     }
   }
   
   Logger.log("Slides created: " + slideDeck.getUrl());
 }
-
 
