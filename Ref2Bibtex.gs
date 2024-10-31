@@ -68,7 +68,7 @@ function fetchTitlesFromGoogleSheet() {
 }
 
 function getScholarIdFromSerpApi(title) {
-  var apiKey = "5e726cec3612bc5b401db44dc7f72727d063e3f8000b6f7138b77021d5fd6981";  // Your SerpApi key
+  var apiKey = "**********";  // Your SerpApi key
   var apiUrl = 'https://serpapi.com/search.json?engine=google_scholar&q=' + encodeURIComponent(title) + '&api_key=' + apiKey;
   
   try {
